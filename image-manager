@@ -1,0 +1,96 @@
+#!/bin/sh
+
+do_create_loopdev() {
+
+	umount /dev/loop0
+	losetup -d /dev/loop0
+
+	START=`fdisk -l ${IMAGE} | tail -1 | awk '{print $2}'`
+	echo Start: ${START}
+	losetup /dev/loop0 ${IMAGE} -o $((START*512))
+
+	if [ ! -d /tmp/loopmnt ]; then
+		mkdir -p /tmp/loopmnt;
+	fi
+	mount /dev/loop0 /tmp/loopmnt
+}
+
+do_remove_loopdev() {
+	losetup -d /dev/loop0
+}
+
+do_mount() {
+	if [ ! -d /tmp/loopmnt ]; then
+                mkdir -p /tmp/loopmnt;
+        fi
+        mount /dev/loop0 /tmp/loopmnt
+}
+
+do_umount() {
+	umount /dev/loop0
+}
+
+do_changeIP() {
+	sed -i "s/  address.*/  address ${IP}\/24/" /tmp/loopmnt/etc/network/interfaces
+}
+
+if [ $# -eq 0 ]
+then
+echo "Usage: image-manager [-modip 1.1.1.1] [-flash /dev/sdb] -img file.img"
+exit 1
+fi
+
+# Parse Arguments
+
+while [ $# -gt 1 ]
+do
+
+key=$1
+case $key in
+	-modip)
+	IP="$2"
+	shift
+	;;
+	-img)
+	IMAGE="$2"
+	shift
+	;;
+	-flash)
+	DEV="$2"
+	shift
+	;;
+	*)
+	;;
+esac
+shift
+done
+
+if [ -z "$IMAGE" ]
+then
+echo "Image file not set"
+exit 1
+fi
+
+if [ ! -z "$IP" ]
+then
+#modify IP
+echo Using image ${IMAGE}
+do_create_loopdev
+do_mount
+do_changeIP
+do_umount
+do_remove_loopdev
+fi
+
+if [ ! -z "$DEV" ]
+then
+#flash sd card
+
+if [ "$DEV" = "/dev/sda" ]
+then
+echo "Writing to /dev/sda not allowed"
+exit 1
+fi
+
+dcfldd if=${IMAGE} of=${DEV}
+fi
