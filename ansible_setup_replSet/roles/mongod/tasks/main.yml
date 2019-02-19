@@ -1,0 +1,63 @@
+---
+
+- name: Install mongodb-package
+  apt:
+    name: mongodb
+    state: present
+  become: yes
+
+#- name: check if mongodb.conf exists
+#  stat: path=/etc/mongodb.conf
+#  register: conf_exist
+
+- name: create mongodb.conf if not exist
+  template: src=mongodb.conf.j2 dest=/etc/mongodb.conf
+  become: yes
+  #when: not conf_exist.stat.exists 
+
+#- name: remove replication.replSetName in Configuration
+#  lineinfile:
+#    path: /etc/mongodb.conf
+#    regexp: '^(#)?replSet ='
+#    state: absent
+#  become: yes
+
+#- name: Set net.bindIp to ip address
+#  lineinfile:
+#    path: /etc/mongodb.conf
+#    regexp: '^bind_ip ='
+#    line: 'bind_ip = 127.0.0.1,{{ ansible_default_ipv4.address }}'
+#  become: yes
+
+# https://docs.mongodb.com/v2.4/tutorial/deploy-replica-set/
+
+#- name: Set fork=true in Configuration
+#  lineinfile:
+#    path: /etc/mongodb.conf
+#    regexp: '^fork = '
+#    line: 'fork = true'
+#  become: yes
+
+- name: restart mongodb
+  service:
+    name: mongodb
+    state: restarted
+  become: true
+
+- name: initiate replication set
+  shell: mongo --eval "rs.initiate()"
+  when: "'replication_master' in group_names"
+
+- name: Set replication.replSetName in Configuration
+  lineinfile:
+    path: /etc/mongodb.conf
+    regexp: '^replSet ='
+    line: 'replSet = rs1'
+  become: yes
+
+- name: restart mongodb
+  service:
+    name: mongodb
+    state: restarted
+  become: true
+

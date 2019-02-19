@@ -1,0 +1,11 @@
+- hosts: all
+  roles: 
+  - role: common
+
+- hosts: mongod_servers
+  roles:
+  - role: mongod
+
+- hosts: replication_master
+  roles:
+  - role: replication_master

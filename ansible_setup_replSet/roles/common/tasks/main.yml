@@ -1,0 +1,49 @@
+---
+
+- name: Determine Gateway Settings
+  command: /sbin/route
+  register: route
+  changed_when: False
+
+- name: Set correct Gateway to access Internet
+  command: route add default gw 192.168.1.2
+  become: yes
+  when: '"192.168.1.2" not in route.stdout'
+
+- name: Set Hostnames
+  hostname:
+    name: "{{ inventory_hostname }}"
+  become: true
+
+- name: Deploy /etc/hosts file
+  template: src=hosts.j2 dest=/etc/hosts
+  become: yes
+  retries: 3
+  delay: 5
+
+- name: Check expanded Partition
+  shell: df | grep /dev/root | [ $(awk '{print $4}') -lt 1000000 ] && echo expand || echo ""
+  register: df_return
+
+- name: Expand rootfs when needed
+  command: raspi-config --expand-rootfs
+  become: true
+  when: df_return.stdout == "expand"
+
+- name: Reboot after rootfs expansion
+  reboot:
+  become: true
+  when: df_return.stdout == "expand"
+
+- name: Determine Gateway Settings
+  command: /sbin/route
+  register: route
+  changed_when: False
+  #when: df_return.stdout == "expand"
+
+- name: Set correct Gateway to access Internet
+  command: route add default gw 192.168.1.2
+  become: yes
+  when:
+  #- 'df_return.stdout == "expand"'
+  - '"192.168.1.2" not in route.stdout'
