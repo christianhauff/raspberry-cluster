@@ -10,6 +10,7 @@
   roles:
   - role: setup_mongoc
 
-- hosts: mongos_router
+- hosts: mongos
   roles:
   - role: setup_mongos
+  - role: setup_shards

@@ -5,13 +5,17 @@ raspi1_[10:14]
 
 [mongod_servers]
 
-raspi1_1
 raspi1_[10:14]
 
 [replication_master]
 
 raspi1_10 useShard=1
 raspi1_15 useShard=2
+
+[shard_masters]
+
+raspi1_11
+raspi1_12
 
 [shard1]
 
@@ -21,7 +25,7 @@ raspi1_[10:14]
 
 raspi1_[15:19]
 
-[mongos_router]
+[mongos]
 
 raspi1_1
 

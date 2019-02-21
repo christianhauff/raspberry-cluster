@@ -1,10 +1,12 @@
 #where to log
-logpath=/var/log/mongo/mongod-config.log
+logpath=/var/log/mongodb/mongod-config.log
 
 logappend=true
 
 # fork and run in background
 #fork = true
+
+journal=true
 
 port = 27019
 
@@ -14,3 +16,4 @@ dbpath=/var/lib/mongodb_config
 pidfilepath = /var/run/mongo/mongoc.pid
 
 configsvr=true
+

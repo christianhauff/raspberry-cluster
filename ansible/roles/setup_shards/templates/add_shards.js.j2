@@ -1,0 +1,7 @@
+{% for host in groups['shard_masters'] %}
+sh.addShard("{{ host }}")
+sleep(2000)
+{% endfor %}
+
+
+sh.enableSharding("testdb")

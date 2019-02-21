@@ -1,0 +1,12 @@
+---
+
+- name: Copy add_shards.js script
+  template: src=add_shards.js.j2 dest=/tmp/add_shards.js
+  become: yes
+
+- name: Add Shards to Cluster
+  shell: mongo < /tmp/add_shards.js
+  register: add_shards_output
+
+- name: Show debuglog of add_shards
+  debug: msg="{{ add_shards_output }}"

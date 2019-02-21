@@ -1,0 +1,28 @@
+---
+
+# https://docs.mongodb.com/v2.4/tutorial/deploy-shard-cluster/#start-the-mongos-instances
+
+- name: Ensure that mongodb-process is stopped
+  service:
+    name: mongodb
+    state: stopped
+  become: yes
+
+- name: Copy init.d file
+  template: src=mongos_init.j2 dest=/etc/init.d/mongos
+  become: yes
+
+- name: Create service file
+  template: src=mongos.service.j2 dest=/lib/systemd/system/mongos.service
+  become: yes
+
+- name: Reload Services
+  command: systemctl daemon-reload
+  become: yes
+
+- name: Start mongos service
+  service:
+    name: mongos
+    state: restarted
+  become: yes
+
