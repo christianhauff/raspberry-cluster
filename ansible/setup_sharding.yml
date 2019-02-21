@@ -1,0 +1,15 @@
+#- hosts: all
+#  roles: 
+#  - role: setup_raspberry
+
+#- hosts: mongod_servers
+#  roles:
+#  - role: setup_mongod
+
+- hosts: mongoc
+  roles:
+  - role: setup_mongoc
+
+- hosts: mongos_router
+  roles:
+  - role: setup_mongos

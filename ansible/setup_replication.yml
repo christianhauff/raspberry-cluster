@@ -1,11 +1,11 @@
 - hosts: all
   roles: 
-  - role: common
+  - role: setup_raspberry
 
 - hosts: mongod_servers
   roles:
-  - role: mongod
+  - role: setup_mongod
 
 - hosts: replication_master
   roles:
-  - role: replication_master
+  - role: setup_replication_master

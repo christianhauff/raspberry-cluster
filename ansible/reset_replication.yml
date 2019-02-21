@@ -1,0 +1,3 @@
+- hosts: mongod_servers
+  roles:
+  - role: reset_replication

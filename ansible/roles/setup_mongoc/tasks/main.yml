@@ -1,0 +1,25 @@
+- name: Create data directory for mongoc configuration server
+  file: path=/var/lib/mongodb_config state=directory owner=mongodb group=mongodb
+  become: yes
+
+- name: Copy init.d file
+  template: src=mongoc_init.j2 dest=/etc/init.d/mongoc
+  become: yes
+
+- name: Create service file
+  template: src=mongoc.service.j2 dest=/lib/systemd/system/mongoc.service
+  become: yes
+
+- name: Copy Config file
+  template: src=mongoc.conf.j2 dest=/etc/mongoc.conf
+  become: yes
+
+- name: Reload Services
+  command: systemctl daemon-reload
+  become: yes
+
+- name: Start mongoc service
+  service:
+    name: mongoc
+    state: restarted
+  become: yes

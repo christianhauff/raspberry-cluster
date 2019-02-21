@@ -1,0 +1,12 @@
+- name: copy reset script
+  template: src=reset_replication_set.js.j2 dest=/tmp/reset_replication_set.js
+  become: yes
+
+- name: reset replication set
+  shell: mongo < /tmp/reset_replication_set.js
+
+- name: restart mongodb
+  service:
+    name: mongodb
+    state: restarted
+  become: yes
