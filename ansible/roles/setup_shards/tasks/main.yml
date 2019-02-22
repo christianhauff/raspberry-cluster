@@ -9,11 +9,17 @@
   become: yes
 
 - name: Add Shards to Cluster
-  shell: mongo < /tmp/add_shards.js
+  shell: mongo /tmp/add_shards.js
   register: add_shards_output
-  retries: 3
-  delay: 5
-  until: add_shards_output.rc == 0
+  #retries: 3
+  #delay: 5
+  #until: add_shards_output.rc == 0
 
 - name: Show debuglog of add_shards
   debug: msg="{{ add_shards_output }}"
+
+- name: Copy Test Data
+  copy: src=insert_testdata.js dest=/tmp/insert_testdata.js
+
+- name: Insert Test Data
+  shell: mongo testdb /tmp/insert_testdata.js

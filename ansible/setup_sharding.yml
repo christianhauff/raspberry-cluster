@@ -1,11 +1,11 @@
-- hosts: all
-  roles: 
-  - role: setup_raspberry
-
-- hosts: mongod_servers
-  roles:
-  - role: setup_mongod
-
+#- hosts: all
+#  roles: 
+#  - role: setup_raspberry
+#
+#- hosts: mongod_servers
+#  roles:
+#  - role: setup_mongod
+#
 - hosts: shard_masters
   roles:
   - role: init_single_rs

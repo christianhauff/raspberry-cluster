@@ -5,6 +5,7 @@
     path: /etc/mongodb.conf
     regexp: '^replSet = '
     line: 'replSet = {{ replSet }}'
+  become: yes
 
 - name: Initialize single Replica Sets
   shell: mongo --eval "rs.initiate()"
