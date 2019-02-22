@@ -1,0 +1,7 @@
+- name: delete config database directory
+  file: path=/var/lib/mongodb_config state=absent
+  become: yes
+
+- name: create mongodb_config data directory
+  file: path=/var/lib/mongodb_config state=directory owner=mongodb group=mongodb
+  become: yes

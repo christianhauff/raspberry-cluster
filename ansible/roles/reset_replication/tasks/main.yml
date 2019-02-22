@@ -5,8 +5,22 @@
 - name: reset replication set
   shell: mongo < /tmp/reset_replication_set.js
 
+- name: delete database directory
+  file: path=/var/lib/mongodb state=absent
+  become: yes
+
+- name: stop mongodb
+  service:
+    name: mongodb
+    state: stopped
+  become: yes
+
+- name: create mongodb data directory
+  file: path=/var/lib/mongodb state=directory owner=mongodb group=mongodb
+  become: yes
+
 - name: restart mongodb
   service:
     name: mongodb
-    state: restarted
+    state: started
   become: yes

@@ -1,0 +1,13 @@
+- name: copy reset script
+  template: src=reset_shards.js.j2 dest=/tmp/reset_shards.js
+  become: yes
+
+- name: reset shards
+  shell: mongo < /tmp/reset_shards.js
+
+- name: Start mongos service
+  service:
+    name: mongos
+    state: restarted
+  become: yes
+

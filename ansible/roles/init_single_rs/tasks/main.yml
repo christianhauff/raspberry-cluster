@@ -1,0 +1,10 @@
+---
+
+- name: Adapt replSet configuration
+  lineinfile:
+    path: /etc/mongodb.conf
+    regexp: '^replSet = '
+    line: 'replSet = {{ replSet }}'
+
+- name: Initialize single Replica Sets
+  shell: mongo --eval "rs.initiate()"

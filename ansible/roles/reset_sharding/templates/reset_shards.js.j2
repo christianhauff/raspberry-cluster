@@ -1,0 +1,8 @@
+use admin
+
+var shards = db.adminCommand({listShards:1}).shards
+
+for (i=0; i<shards.length; i++) {
+  db.runCommand( { removeShard: shards[i]._id } )
+  sleep(5000)
+}

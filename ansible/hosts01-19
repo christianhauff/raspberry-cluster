@@ -14,8 +14,8 @@ raspi1_15 useShard=2
 
 [shard_masters]
 
-raspi1_11
-raspi1_12
+raspi1_11 replSet=rs1
+raspi1_12 replSet=rs2
 
 [shard1]
 

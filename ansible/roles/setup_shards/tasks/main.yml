@@ -1,5 +1,9 @@
 ---
 
+#- name: Debug hostvars
+#  debug:
+#    msg: "{{ hostvars[groups['shard_masters'][0]] }}"
+
 - name: Copy add_shards.js script
   template: src=add_shards.js.j2 dest=/tmp/add_shards.js
   become: yes
@@ -7,6 +11,9 @@
 - name: Add Shards to Cluster
   shell: mongo < /tmp/add_shards.js
   register: add_shards_output
+  retries: 3
+  delay: 5
+  until: add_shards_output.rc == 0
 
 - name: Show debuglog of add_shards
   debug: msg="{{ add_shards_output }}"

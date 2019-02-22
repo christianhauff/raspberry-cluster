@@ -1,0 +1,11 @@
+- hosts: mongo_servers
+  roles:
+  - role: reset_replication
+
+- hosts: mongoc
+  roles:
+  - role: reset_configsvr
+
+- hosts: mongos
+  roles:
+  - role: reset_sharding

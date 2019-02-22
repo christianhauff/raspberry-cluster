@@ -1,7 +1,8 @@
 {% for host in groups['shard_masters'] %}
-sh.addShard("{{ host }}")
+sh.addShard("{{ hostvars[host].replSet }}/{{ host }}")
 sleep(2000)
 {% endfor %}
 
 
 sh.enableSharding("testdb")
+sh.shardCollection("testdb.testCol", {"_id": "hashed"})
