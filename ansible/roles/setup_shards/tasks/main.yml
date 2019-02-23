@@ -16,10 +16,10 @@
   #until: add_shards_output.rc == 0
 
 - name: Show debuglog of add_shards
-  debug: msg="{{ add_shards_output }}"
+  debug: msg="{{ add_shards_output.stdout_lines }}"
 
 - name: Copy Test Data
-  copy: src=insert_testdata.js dest=/tmp/insert_testdata.js
+  template: src=insert_random.js dest=/tmp/insert_random.js
 
 - name: Insert Test Data
-  shell: mongo testdb /tmp/insert_testdata.js
+  shell: mongo testdb /tmp/insert_random.js
