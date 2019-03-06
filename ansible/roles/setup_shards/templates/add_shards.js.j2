@@ -16,7 +16,7 @@ print(e)
 quit(1)
 }
 try{
-sh.shardCollection("testdb.testCol", {"key": "hashed"})
+sh.shardCollection("testdb.testCol", {"key": 1})
 }
 catch(e) {
 print(e)
@@ -24,3 +24,8 @@ quit(1)
 }
 
 sh.status()
+
+// set chunk size to 1MB
+
+db = db.getSiblingDB('config');
+db.settings.save({_id:"chunksize", value: 1})
