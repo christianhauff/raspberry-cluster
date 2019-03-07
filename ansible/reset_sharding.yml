@@ -1,4 +1,4 @@
-- hosts: mongo_servers
+- hosts: shard_servers
   roles:
   - role: reset_replication
 

@@ -1,0 +1,11 @@
+- name: copy replication set initialization
+  template: src=rep_init.js.j2 dest=/tmp/rep_init.js
+  become: yes
+
+- name: initialize replication set
+  shell: mongo < /tmp/rep_init.js
+  register: init_output
+
+- name: show init output
+  debug:
+    msg: "{{ init_output }}"

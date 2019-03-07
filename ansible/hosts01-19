@@ -2,6 +2,7 @@
 
 raspi1_1
 raspi1_[10:14]
+raspi1_[15:19]
 
 [mongod_servers]
 
@@ -14,14 +15,19 @@ raspi1_15 useShard=2
 
 [shard_masters]
 
-raspi1_11 replSet=rs1
-raspi1_12 replSet=rs2
+raspi1_10 replSet=rs1
+raspi1_15 replSet=rs2
 
-[shard1]
+[shard_servers]
+
+raspi1_[10:14] replSet=rs1
+raspi1_[15:19] replSet=rs2
+
+[rs1]
 
 raspi1_[10:14]
 
-[shard2]
+[rs2]
 
 raspi1_[15:19]
 

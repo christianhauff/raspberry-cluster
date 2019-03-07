@@ -1,0 +1,12 @@
+- name: Set replSet in mongod config
+  lineinfile:
+    path: /etc/mongodb.conf
+    regexp: '^replSet ='
+    line: 'replSet = {{ replSet }}'
+  become: yes
+
+- name: Start mongod service
+  service:
+    name: mongodb
+    state: restarted
+  become: yes

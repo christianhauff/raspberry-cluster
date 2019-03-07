@@ -1,0 +1,25 @@
+- import_playbook: reset_sharding.yml
+
+#- hosts: all
+#  roles: 
+#  - role: setup_raspberry
+
+- hosts: mongos
+  roles:
+  - role: setup_mongos
+
+- hosts: shard_servers
+  roles:
+  - role: repshards_config
+
+- hosts: shard_masters
+  roles:
+  - role: setup_repshards
+
+- hosts: mongoc
+  roles:
+  - role: setup_mongoc
+
+- hosts: mongos
+  roles:
+  - role: init_repshards

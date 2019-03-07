@@ -1,0 +1,31 @@
+try {
+{% for host in groups['shard_masters'] %}
+sh.addShard("{{ hostvars[host].replSet }}/{{ groups[hostvars[host].replSet]|join(",") }}")
+sleep(2000)
+{% endfor %}
+}
+catch(e) {
+print(e)
+quit(1)
+}
+try {
+sh.enableSharding("testdb")
+}
+catch(e) {
+print(e)
+quit(1)
+}
+try{
+sh.shardCollection("testdb.testCol", {"key": 1})
+}
+catch(e) {
+print(e)
+quit(1)
+}
+
+sh.status()
+
+// set chunk size to 1MB
+
+db = db.getSiblingDB('config');
+db.settings.save({_id:"chunksize", value: 1})

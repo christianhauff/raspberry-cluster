@@ -2,8 +2,16 @@
   template: src=reset_shards.js.j2 dest=/tmp/reset_shards.js
   become: yes
 
+- name: Start mongos service
+  service:
+    name: mongos
+    state: started
+  become: yes
+
 - name: reset shards
   shell: mongo < /tmp/reset_shards.js
+  retries: 3
+  delay: 5
 
 - name: Start mongos service
   service:
