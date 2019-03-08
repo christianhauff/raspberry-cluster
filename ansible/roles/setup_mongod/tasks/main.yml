@@ -4,6 +4,7 @@
   apt:
     name: mongodb
     state: present
+    update_cache: yes
   become: yes
 
 - name: create mongodb.conf
