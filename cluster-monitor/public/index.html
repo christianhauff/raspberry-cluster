@@ -1,0 +1,32 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Cluster Monitor</title>
+<link rel="stylesheet" type="text/css" href="index.css" />
+<script src="index.js"></script>
+</head>
+
+<body>
+<div class="header">
+  <h1>Cluster-Monitor</h1>
+</div>
+
+<div class="container">
+
+<div>
+  <a href="#" onClick="wsset('default')">Default</a>
+  <a href="#" onClick="wsset('shstatus')">sh.status</a>
+  <a href="#" onClick="wsset('sharddistribution')">getShardDistribution</a>
+  <a href="#" onClick="wsset('doccount')">doccount</a>
+</div>
+
+<input type="checkbox" id="append">Append</input>
+<br><br>
+<pre>
+<span id="log">
+</span>
+</pre>
+
+</div>
+</body>
+</html>
