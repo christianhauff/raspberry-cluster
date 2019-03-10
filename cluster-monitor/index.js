@@ -7,14 +7,16 @@ app.use(express.static('public'))
 app.listen(port, () => console.log(`cluster-monitor app listening on port ${port}!`))
 var mode = "default";
 
+var pingstats = {};
+
 var ws = require("nodejs-websocket")
 var server = ws.createServer(function (conn) {
     console.log("New connection")
     conn.on("text", function (str) {
-      if (['default','shstatus','sharddistribution', 'doccount'].indexOf(str) > -1) {
+      if (['default','shstatus','sharddistribution', 'doccount', 'ping'].indexOf(str) > -1) {
         mode = str;
         console.log("changed: " + mode)
-        monitor_loop()
+        monitorLoop()
       }
     })
     conn.on("close", function (code, reason) {
@@ -34,9 +36,9 @@ function broadcast_exec(error, stdout, stderr) { broadcast(server, stdout) }
 var dbstats = new dbstats()
 
 
-setInterval(monitor_loop, 1000)
+setInterval(monitorLoop, 1000)
 
-function monitor_loop() {
+function monitorLoop() {
   //broadcast(server, "ping")
   var outval = "";
 
@@ -60,12 +62,32 @@ function monitor_loop() {
   break;
   
   case "ping":
-  //TODO
+  outval = JSON.stringify(pingstats, null, 2);
   break;
   
   }
   
   broadcast(server, outval)
+}
+
+var targets = ['192.168.1.1', '192.168.1.10', '192.168.1.11', '192.168.1.12', '192.168.1.13', '192.168.1.14', '192.168.1.15', '192.168.1.16', '192.168.1.17', '192.168.1.18', '192.168.1.19']
+var ping = require('net-ping') //root required
+setInterval(pingLoop, 2000)
+
+function pingLoop() {
+  
+  var session = ping.createSession();
+  
+  for (i=0; i<targets.length; i++) {
+    session.pingHost(targets[i], function(e, t) {
+      if (!e) {
+        pingstats[t] = "Alive";
+      }
+      else {
+        pingstats[t] = "Dead";
+      }
+    });
+  }
 }
 
 function dbstats() {
