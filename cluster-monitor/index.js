@@ -4,7 +4,14 @@ const port = 3000;
 
 app.use(express.static('public'));
 
-app.listen(port, () => console.log(`cluster-monitor app listening on port ${port}!`));
+try {
+  app.listen(port, () => console.log(`cluster-monitor app listening on port ${port}!`));
+}
+catch(err) {
+  console.log(err)
+  process.exit(0)
+}
+
 var mode = "default";
 
 var pingstats = {};
@@ -39,41 +46,95 @@ setInterval(monitorLoop, 1000);
 
 function monitorLoop() {
   //broadcast(server, "ping")
-  var outval = "";
+  var out_log = "";
+  var out_display = "";
 
  switch (mode) {
   
   case "default":
-  outval += dbstats.getShardDistribution();
-  outval += dbstats.getDocNumber();
+  out_log += dbstats.getShardDistribution();
+  out_log += dbstats.getDocNumber();
   break;
   
   case "shstatus":
-  outval += dbstats.getShStatus();
+  out_log += dbstats.getShStatus();
   break;
   
   case "sharddistribution":
-  outval += dbstats.getShardDistribution();
+  out_log += dbstats.getShardDistribution();
   break;
   
   case "doccount":
-  outval += dbstats.getDocNumber();
+  out_log += dbstats.getDocNumber();
   break;
   
   case "repsetstatus":
-  outval += dbstats.getRsStatus();
+  var rsStatus = dbstats.getRsStatus();
+  out_log += JSON.stringify(rsStatus, null, 2);
+  
+  try {
+    out_display = `<table>\n<tr>\n<td>RS1</td>\n`
+    var members = rsStatus.rs1.members;
+    for (i=0; i<members.length; i++) {
+      if (members[i].health == 1) {
+        out_display +=  "<td class='host_alive'>" + members[i].name.slice(0,-6) + "<br>" + members[i].stateStr + "</td>\n"
+      }
+      else {
+        out_display +=  "<td class='host_dead'>" + members[i].name.slice(0,-6) + "<br>" + members[i].stateStr + "</td>\n"
+      }
+    }
+    out_display += "</tr>"
+    
+    out_display += `<tr>\n<td>RS2</td>\n`
+    var members = rsStatus.rs2.members;
+    for (i=0; i<members.length; i++) {
+      if (members[i].health == 1) {
+        out_display +=  "<td class='host_alive'>" + members[i].name.slice(0,-6) + "<br>" + members[i].stateStr + "</td>\n"
+      }
+      else {
+        out_display +=  "<td class='host_dead'>" + members[i].name.slice(0,-6) + "<br>" + members[i].stateStr + "</td>\n"
+      }
+    }
+    out_display += "</tr>"
+    
+    out_display += "</table>"
+  }
+  catch (e) {
+    console.log("repsetstatus failed")
+  }
+  
   break;
   
   case "ping":
-  outval = JSON.stringify(pingstats, null, 2);
+  out_log = JSON.stringify(pingstats, null, 2);
+  
+  out_display = "<table>"
+  for (var host in pingstats) {
+    if (pingstats[host] == "Alive") {
+      out_display += "<tr><td class='host_alive'>"+host+"</td></tr>"
+    }
+    else {
+      out_display += "<tr><td class='host_dead'>"+host+"</td></tr>"
+    }
+  }
   break;
   
   }
   
-  broadcast(server, outval);
+  var outval = {};
+  outval["display"] = out_display;
+  outval["log"] = out_log;
+  
+  broadcast(server, JSON.stringify(outval));
 }
 
 var targets = ['192.168.1.1', '192.168.1.10', '192.168.1.11', '192.168.1.12', '192.168.1.13', '192.168.1.14', '192.168.1.15', '192.168.1.16', '192.168.1.17', '192.168.1.18', '192.168.1.19'];
+
+var rs1members = ['192.168.1.10', '192.168.1.11', '192.168.1.12', '192.168.1.13', '192.168.1.14'];
+var rs2members = ['192.168.1.15', '192.168.1.16', '192.168.1.17', '192.168.1.18', '192.168.1.19'];
+var rs3members = ['192.168.1.20', '192.168.1.21', '192.168.1.22', '192.168.1.23', '192.168.1.24'];
+var rs4members = ['192.168.1.25', '192.168.1.26', '192.168.1.27', '192.168.1.28', '192.168.1.29'];
+
 var ping = require('net-ping'); //root required
 setInterval(pingLoop, 2000);
 
@@ -99,6 +160,7 @@ function dbstats() {
   }
   
   this.getShardDistribution = function() {
+  
     return exec("mongo testdb --eval 'db.testCol.getShardDistribution()'").toString().split("\n").splice(2).join("\n");
   }
   
@@ -107,6 +169,34 @@ function dbstats() {
   }
   
   this.getRsStatus = function() {
-    return exec("mongo testdb --host raspi1_10 --eval 'JSON.stringify(rs.status(), null, 2)';mongo testdb --host raspi1_15 --eval 'JSON.stringify(rs.status(), null, 2)';");
+    var status = {};
+    
+    for (i=0; i<rs1members.length; i++) {
+      try {
+        var result = exec("mongo testdb --host " + rs1members[i] + " --eval 'JSON.stringify(rs.status(), null, 2)';");
+        status["rs1"] = JSON.parse(result.toString().split("\n").splice(2).join("\n"));
+        i>0 ? console.log("rs1: call to member " + i + " succeeded") : null;
+        break;
+      }
+      catch(e) {
+        console.log("rs1: call to member " + trynumber + " failed");
+        continue;
+      }
+    }
+    
+    for (i=0; i<rs2members.length; i++) {
+      try {
+        var result = exec("mongo testdb --host " + rs2members[i] + " --eval 'JSON.stringify(rs.status(), null, 2)';");
+        status["rs2"] = JSON.parse(result.toString().split("\n").splice(2).join("\n"));
+        i>0 ? console.log("rs2: call to member " + i + " succeeded") : null;
+        break;
+      }
+      catch(e) {
+        console.log("rs2: call to member " + trynumber + " failed");
+        continue;
+      }
+    }
+
+    return status
   }
 }

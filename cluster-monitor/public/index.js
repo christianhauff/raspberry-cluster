@@ -7,13 +7,9 @@
   };
 
   socket.onmessage = function (evt) { 
-    var received_msg = evt.data;
-    if (document.getElementById("append").checked) {
-      document.getElementById("log").innerHTML += new Date().toISOString() + "\n\n" + received_msg + "<br>"
-    }
-    else {
-      document.getElementById("log").innerHTML = new Date().toISOString() + "\n\n" + received_msg + "<br>"
-    }
+    var received_msg = JSON.parse(evt.data);
+      document.getElementById("log").innerHTML = new Date().toISOString() + "\n\n" + received_msg.log + "<br>" || ""
+      document.getElementById("display").innerHTML = received_msg.display || ""
   };
 
   socket.onerror = function (error) {

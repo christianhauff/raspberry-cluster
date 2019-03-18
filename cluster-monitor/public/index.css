@@ -6,3 +6,13 @@ body {
 a {
   color: #fff
 }
+
+.host_alive {
+  background-color: green;
+  padding: 5px;
+}
+
+.host_dead {
+  background-color: red;
+  padding: 5px;
+}
