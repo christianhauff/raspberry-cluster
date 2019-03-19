@@ -16,3 +16,17 @@ a {
   background-color: red;
   padding: 5px;
 }
+
+.progress-outer {
+ width: 90%;
+ background-color: #aaa;
+ height: 30px;
+ display: flex; 
+}
+
+.progress-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -53,7 +53,7 @@ function monitorLoop() {
   
   case "default":
   out_log += dbstats.getShardDistribution();
-  out_log += dbstats.getDocNumber();
+  out_log += "Document Count: " + dbstats.getDocNumber();
   break;
   
   case "shstatus":
@@ -61,7 +61,29 @@ function monitorLoop() {
   break;
   
   case "sharddistribution":
-  out_log += dbstats.getShardDistribution();
+  var shardDist = dbstats.getShardDistribution();
+  out_log += shardDist;
+  
+  var shardDistRegex = new RegExp("Shard ([\w]+)")
+  
+  var distributionStrings = shardDist.match(/Shard (\w+) contains ([\d\.%]+)/g)
+  
+  //console.log(JSON.stringify(distributionStrings, null, 2))
+  
+  out_display += "<div class='progress-outer'>"
+  
+  var colors = ['#099E09', '#1E90FF', '#c63423', '#b4b737']
+  
+  for (i=0; i<distributionStrings.length; i++) {
+    let shardInfo = distributionStrings[i]
+    let shardInfoFields = shardInfo.split(" ")
+    
+    //console.log("name: " + shardInfoFields[1] + "; perc: " + shardInfoFields[3])
+    
+    out_display += "<span class='progress-inner' style='width: " + shardInfoFields[3] + "; background-color: " + colors[i] + ";'>" + shardInfoFields[1] + ": " + shardInfoFields[3] + "</span>"
+    
+  }
+
   break;
   
   case "doccount":
@@ -135,8 +157,13 @@ var rs2members = ['192.168.1.15', '192.168.1.16', '192.168.1.17', '192.168.1.18'
 var rs3members = ['192.168.1.20', '192.168.1.21', '192.168.1.22', '192.168.1.23', '192.168.1.24'];
 var rs4members = ['192.168.1.25', '192.168.1.26', '192.168.1.27', '192.168.1.28', '192.168.1.29'];
 
-var ping = require('net-ping'); //root required
-setInterval(pingLoop, 2000);
+if (exec("whoami").toString() == "root\n") {
+  var ping = require('net-ping'); //root required
+  setInterval(pingLoop, 2000);
+}
+else {
+  pingstats["error"] = "root privileges required for ping";
+}
 
 function pingLoop() {
   
