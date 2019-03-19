@@ -2,6 +2,10 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
+app.get('/generateData', function(req, res) {
+  generateRandomDataset();
+  res.send(executeClusterBenchmark());
+});
 app.use(express.static('public'));
 
 try {
@@ -226,4 +230,23 @@ function dbstats() {
 
     return status
   }
+}
+
+function rand() {return Math.round(Math.random()*1000000)};
+
+function generateRandomDataset(number = 100000) {
+  var filecontent = "db = db.getSiblingDB('testdb');\n"
+  for (i=0; i<number; i++) {
+    filecontent += "db.testCol.insert({key:"+rand()+",val1:"+rand()+",val2:"+rand()+"});\n"
+  }
+  const fs = require('fs');
+  fs.writeFile("/tmp/insert_random_benchmark.js", filecontent, function(){});
+}
+
+function executeClusterBenchmark() {
+  var start = new Date()
+  console.log(exec("mongo /tmp/insert_random_benchmark.js").toString());
+  var duration = new Date() - start
+  console.log('%dms', duration);
+  return duration.toString();
 }
