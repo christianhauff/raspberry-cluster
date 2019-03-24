@@ -111,14 +111,39 @@ ansible-playbook -i <inventory file> <playbook file>
 
 * Hosts shard_servers
   * Role reset_replication
-    * 
+    * removing and recreating the whole database directory
+    * restart mongodb service
 * Hosts mongoc
   * Role reset_configsrv
-    * 
+    * removing and recreating the whole configsrv database directory
 * Hosts mongos
   * Role reset_sharding
-    * 
+    * executing reset script removing all shards
 
 ### setup_repsharding.yml
 
+* Execute Playbook `reset_sharding.yml`
+* Hosts mongos
+  * Role setup_mongos
+    * create init.d-file and service-file
+    * start mongos service
+* Hosts shard_servers
+  * Role repshards_config
+    * set correct replSet in mongodb.conf
+    * restart mognodb
+* Hosts shard_masters
+  * Role setup_repshards
+    * add all hosts of replica set to set
+* Hosts mongoc
+  * Role setup_mongoc
+    * create database directory, init.d-file, logfile, service file and mongoc.conf
+    * start mongoc
+* Hosts mongos
+  * Role init_repshards
+    * restart mongos
+    * execute script adding shards
+    * inserting test data
+
 ### setup_monitoring.yml
+
+* copy and start node.js-project for cluster monitoring
