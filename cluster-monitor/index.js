@@ -3,8 +3,9 @@ const app = express();
 const port = 3000;
 
 app.get('/generateData', function(req, res) {
-  generateRandomDataset();
-  res.send(executeClusterBenchmark());
+  //generateRandomDataset();
+  //res.send(executeClusterBenchmark());
+  executeClusterBenchmark(res);
 });
 app.use(express.static('public'));
 
@@ -19,6 +20,7 @@ catch(err) {
 var mode = "default";
 
 var pingstats = {};
+var insObj = [];
 
 var ws = require("nodejs-websocket")
 var server = ws.createServer(function (conn) {
@@ -135,26 +137,40 @@ function monitorLoop() {
   out_log = JSON.stringify(pingstats, null, 2);
   
   out_display = "<table>"
+  var nth = 0;
   for (var host in pingstats) {
+    if (nth%5==0){
+      if (nth !== 0) {
+        out_display += "</tr>";
+      }
+      out_display += "<tr>";
+    }
     if (pingstats[host] == "Alive") {
-      out_display += "<tr><td class='host_alive'>"+host+"</td></tr>"
+      out_display += "<td class='host_alive'>"+host+"</td>"
     }
     else {
-      out_display += "<tr><td class='host_dead'>"+host+"</td></tr>"
+      out_display += "<td class='host_dead'>"+host+"</td>"
     }
+    nth++;
   }
+  out_display += "</tr>";
+
   break;
   
-  }
+  } // end switch
   
   var outval = {};
   outval["display"] = out_display;
   outval["log"] = out_log;
   
   broadcast(server, JSON.stringify(outval));
-}
 
-var targets = ['192.168.1.1', '192.168.1.10', '192.168.1.11', '192.168.1.12', '192.168.1.13', '192.168.1.14', '192.168.1.15', '192.168.1.16', '192.168.1.17', '192.168.1.18', '192.168.1.19'];
+} //end monitorLoop function
+
+var targets = ['192.168.1.1', '192.168.1.10', '192.168.1.11', '192.168.1.12', '192.168.1.13', '192.168.1.14', 
+  '192.168.1.15', '192.168.1.16', '192.168.1.17', '192.168.1.18', '192.168.1.19',
+  '192.168.1.20', '192.168.1.21', '192.168.1.22', '192.168.1.23', '192.168.1.24', 
+  '192.168.1.25', '192.168.1.26', '192.168.1.27', '192.168.1.28', '192.168.1.29', '192.168.1.30'];
 
 var rs1members = ['192.168.1.10', '192.168.1.11', '192.168.1.12', '192.168.1.13', '192.168.1.14'];
 var rs2members = ['192.168.1.15', '192.168.1.16', '192.168.1.17', '192.168.1.18', '192.168.1.19'];
@@ -234,19 +250,37 @@ function dbstats() {
 
 function rand() {return Math.round(Math.random()*1000000)};
 
-function generateRandomDataset(number = 100000) {
-  var filecontent = "db = db.getSiblingDB('testdb');\n"
+function generateRandomDataset(number = 1000) {
+  // var filecontent = "db = db.getSiblingDB('testdb');\n"
+  // for (i=0; i<number; i++) {
+  //   filecontent += "db.testCol.insert({key:"+rand()+",val1:"+rand()+",val2:"+rand()+"});\n"
+  // }
+  // const fs = require('fs');
+  // fs.writeFile("/tmp/insert_random_benchmark.js", filecontent, function(){});
+
   for (i=0; i<number; i++) {
-    filecontent += "db.testCol.insert({key:"+rand()+",val1:"+rand()+",val2:"+rand()+"});\n"
+    insObj.push({key: rand(), var1: rand(), var2: rand()})
   }
-  const fs = require('fs');
-  fs.writeFile("/tmp/insert_random_benchmark.js", filecontent, function(){});
+
 }
 
-function executeClusterBenchmark() {
-  var start = new Date()
-  console.log(exec("mongo /tmp/insert_random_benchmark.js").toString());
-  var duration = new Date() - start
-  console.log('%dms', duration);
-  return duration.toString();
+function executeClusterBenchmark(res) {
+  var response = res;
+  //console.log(exec("mongo /tmp/insert_random_benchmark.js").toString());
+  var mongo = require('mongodb').MongoClient;
+  mongo.connect("mongodb://127.0.0.1:27017/", function (e, db) {
+    if (e) {console.log(e);return false;}
+    console.log("connection successful");
+    var dbo = db.db("testdb");
+    if (insObj.length == 0) {generateRandomDataset()}
+    console.log("insert start");
+    var start = new Date()
+    dbo.collection("testCol").insertMany(insObj, function(e, res) {
+      console.log("insert end");
+      var duration = new Date() - start
+      if (e) {console.log("error");return;}
+      //console.log(JSON.stringify(res, null, 2));
+      response.send({status: 200, duration: duration});
+    })
+  });
 }
