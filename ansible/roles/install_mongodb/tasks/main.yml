@@ -15,12 +15,9 @@
   file: path=/var/lib/mongodb state=directory owner=mongodb group=mongodb
   become: yes
 
-# https://docs.mongodb.com/v2.4/tutorial/deploy-replica-set/
-
 - name: restart mongodb
   service:
     name: mongodb
     state: restarted
   become: true
-
 

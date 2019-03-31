@@ -1,7 +1,7 @@
 rs.initiate()
-sleep(13000)
+sleep(15000)
 {% for host in groups[replSet]%}
 rs.add("{{ host }}")
-sleep(8000)
+sleep(15000)
 {% endfor %}
 printjson(rs.status())

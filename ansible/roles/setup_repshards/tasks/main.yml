@@ -3,9 +3,9 @@
   become: yes
 
 - name: initialize replication set
-  shell: mongo < /tmp/rep_init.js
+  shell: mongo /tmp/rep_init.js
   register: init_output
 
 - name: show init output
   debug:
-    msg: "{{ init_output }}"
+    var: init_output

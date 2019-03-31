@@ -3,6 +3,9 @@
 raspi1_1
 raspi1_[10:14]
 raspi1_[15:19]
+raspi1_[20:24]
+raspi1_[25:29]
+raspi1_30
 
 [mongod_servers]
 
@@ -12,16 +15,22 @@ raspi1_[10:14]
 
 raspi1_10 useShard=1
 raspi1_15 useShard=2
+raspi1_20 useShard=3
+raspi1_25 useShard=4
 
 [shard_masters]
 
 raspi1_10 replSet=rs1
 raspi1_15 replSet=rs2
+raspi1_20 replSet=rs3
+raspi1_25 replSet=rs4
 
 [shard_servers]
 
 raspi1_[10:14] replSet=rs1
 raspi1_[15:19] replSet=rs2
+raspi1_[20:24] replSet=rs3
+raspi1_[25:29] replSet=rs4
 
 [rs1]
 
@@ -30,6 +39,14 @@ raspi1_[10:14]
 [rs2]
 
 raspi1_[15:19]
+
+[rs3]
+
+raspi1_[20:24]
+
+[rs4]
+
+raspi1_[25:29]
 
 [mongos]
 

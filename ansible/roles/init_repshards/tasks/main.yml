@@ -8,18 +8,28 @@
   template: src=add_shards.js.j2 dest=/tmp/add_shards.js
   become: yes
 
-- name: Ensure mongos is running
+- name: Ensure mongod is stopped to free ports
   service:
-    name: mongos
+    name: mongodb
+    state: stopped
+  become: yes
+
+- name: Ensure mongoc is running
+  service:
+    name: mongoc
     state: started
   become: yes
 
+- pause:
+    seconds: 10
+
 - name: Add Shards to Cluster
-  shell: mongo /tmp/add_shards.js
+  shell: sudo service mongos start && mongo testdb /tmp/add_shards.js
   register: add_shards_output
-  retries: 5
-  delay: 5
+  retries: 10
+  delay: 10
   until: add_shards_output.rc == 0
+  become: yes
 
 - name: Show debuglog of add_shards
   debug: msg="{{ add_shards_output.stdout_lines }}"

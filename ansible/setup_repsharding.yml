@@ -1,12 +1,16 @@
+- hosts: all
+  roles:
+  - role: setup_raspberry
+
 - import_playbook: reset_sharding.yml
 
-#- hosts: all
-#  roles: 
-#  - role: setup_raspberry
+- hosts: mongo_servers
+  roles:
+  - role: setup_mongod
 
 - hosts: mongos
   roles:
-  - role: setup_mongos
+  - role: install_mongodb
 
 - hosts: shard_servers
   roles:

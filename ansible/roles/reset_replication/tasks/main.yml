@@ -5,22 +5,37 @@
 #- name: reset replication set
 #  shell: mongo < /tmp/reset_replication_set.js
 
+- name: check if mongodb is installed
+  shell: dpkg -s mongodb >/dev/null 2>&1
+  register: mongodb_installed
+  ignore_errors: true
+
+- name: debug output for mongodb_installed
+  debug: 
+    var: mongodb_installed
+
 - name: delete database directory
   file: path=/var/lib/mongodb state=absent
   become: yes
+  when: mongodb_installed.rc == 0
 
 - name: stop mongodb
   service:
     name: mongodb
     state: stopped
   become: yes
+  ignore_errors: yes
+  when: mongodb_installed.rc == 0
 
 - name: create mongodb data directory
   file: path=/var/lib/mongodb state=directory owner=mongodb group=mongodb
   become: yes
+  when: mongodb_installed.rc == 0
 
 - name: restart mongodb
   service:
     name: mongodb
     state: started
   become: yes
+  ignore_errors: yes
+  when: mongodb_installed.rc == 0
