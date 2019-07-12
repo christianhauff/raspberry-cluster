@@ -2,11 +2,37 @@
 
 > Project repository with helper scripts for deploying a raspberry cluster using MongoDB
 
+# Basics
+
+The contents of this repository help creating a cluster of multiple Raspberry Pi Computers running a MongoDB Database Software to show the fundamentals of Replication (splitting the same data on multiple machines for redunancy) and Sharding (splitting the datasets on several machines to distribute storage and computing power). Using the Cluster, also effects of network partitions (unplugging single computers from the cluster) and performance measurements can be observed.
+
+## MongoDB
+
+
+
 # Flashing SD Cards
 
-* Setup Raspberry including static IP Configuration, Password, SSH-Key, localization, ...
-* Create image file (see [here](http://www.aoakley.com/articles/2015-10-09-resizing-sd-images.php))
-* For flashing all SD-Cards of the cluster, use `image-manager`
+To setup the cluster, all Raspberrys have to be prepared for remote access. One Raspberry has to be configured manually: 
+
+* (recommended) Change Default password for User "pi"
+* sudo raspi-config
+  * Localization Options -> Change Locale -> de_DE.UTF-8 UTF-8
+  * Localization Options -> Change Timezone -> Europe/Berlin
+  * Localization Options -> Change Keyboard Layout -> Generic 105-key -> German
+  * Enable SSH Server
+* Edit /etc/network/interfaces
+  ```
+  auto eth0
+  allow-hotplug eth0
+
+  iface eth0 inet static
+  address 192.168.1.1
+  ```
+* Generate an SSH-Keypair
+
+Once the first Raspberry is configured, an image of the SD-Card must be created. Refer to http://www.aoakley.com/articles/2015-10-09-resizing-sd-images.php. It is highly recommended to shrink the image file after creation as described in the article above.
+
+For quickly replicating this ready configured OS on all other SD Cards, the script `image-manager` can be used. The IP Adresses (`-modip`) must be set consecutive or at least unique to allow all Raspberrys to be operated in the same network.
 
 Usage:
 ```
@@ -19,6 +45,17 @@ Usage: image-manager [-modip 1.1.1.1] [-flash /dev/sdb] -img file.img
          (the option '/dev/sda' will be blocked)
 -img:    the image file used
 ```
+
+To make all Raspberrys easily accessible, the computer from where the cluster should be configured (also connected to the network switch, together with all raspberrys) must also have a static IP Address in the same Subnet (e.g. 192.168.1.2). A file `~/.ssh/config` has to be created, containing a block for each raspberry of the cluster, see below:
+
+```
+Host raspi1_1
+  HostName 192.168.1.1
+  User pi
+  IdentityFile ~/.ssh/raspi.priv
+```
+
+For each Device, the Host (e.g. raspi1_1) and the IP-Address (e.g. 192.168.1.1) have to be modified. The Privatekey used for the configuration of the initial Raspberry must be present at the `IdentityFile`-Path. For more information on ssh config, refer [here](https://www.ssh.com/ssh/config/).
 
 # Start Router
 
@@ -147,3 +184,7 @@ ansible-playbook -i <inventory file> <playbook file>
 ### setup_monitoring.yml
 
 * copy and start node.js-project for cluster monitoring
+
+# Monitoring
+
+For easier monitoring of the cluster, `/cluster-monitor` contains a node.js-Application to allow viewing the stats of the cluster in realtime. The application has to be deployed on the Device running the mongoc-service (routing). 
