@@ -8,17 +8,17 @@ The contents of this repository help creating a cluster of multiple Raspberry Pi
 
 ## MongoDB
 
+MongoDB is a database software... tbd
 
-
-# Flashing SD Cards
+# Preparing the SD Cards
 
 To setup the cluster, all Raspberrys have to be prepared for remote access. One Raspberry has to be configured manually: 
 
-* (recommended) Change Default password for User "pi"
+* (recommended) Change default password for user "pi"
 * sudo raspi-config
-  * Localization Options -> Change Locale -> de_DE.UTF-8 UTF-8
-  * Localization Options -> Change Timezone -> Europe/Berlin
-  * Localization Options -> Change Keyboard Layout -> Generic 105-key -> German
+  * Localization Options -> Change Locale -> de_DE.UTF-8 UTF-8 (choose appropriate)
+  * Localization Options -> Change Timezone -> Europe/Berlin (choose appropriate)
+  * Localization Options -> Change Keyboard Layout -> Generic 105-key -> German (choose appropriate)
   * Enable SSH Server
 * Edit /etc/network/interfaces
   ```
@@ -28,7 +28,7 @@ To setup the cluster, all Raspberrys have to be prepared for remote access. One 
   iface eth0 inet static
   address 192.168.1.1
   ```
-* Generate an SSH-Keypair
+* Generate an SSH-Keypair (privatekey will be needed later for ansible)
 
 Once the first Raspberry is configured, an image of the SD-Card must be created. Refer to http://www.aoakley.com/articles/2015-10-09-resizing-sd-images.php. It is highly recommended to shrink the image file after creation as described in the article above.
 
@@ -57,11 +57,19 @@ Host raspi1_1
 
 For each Device, the Host (e.g. raspi1_1) and the IP-Address (e.g. 192.168.1.1) have to be modified. The Privatekey used for the configuration of the initial Raspberry must be present at the `IdentityFile`-Path. For more information on ssh config, refer [here](https://www.ssh.com/ssh/config/).
 
+The IP Configuration used for the project is the following (any ip range can be used as long as the addresses are unique):
+
+|Address(-range)|Usage|
+|---|---|
+|192.168.1.1|"Master"-Raspberry (Monitoring, mongoc router)|
+|192.168.1.2|Computer used for configuring the cluster, running ansible|
+|192.168.1.10-29|20 Cluster Nodes|
+
 # Start Router
 
-`start_router.sh` is a script to start NAT Forwarding on a computer that connects the cluster to the internet. ipv4 forwarding has to be activated seperately
+If the IP-Adresses are chosen out of a free range in an existing network, the cluster can be directly attached to the LAN by connecting them all over a network switch. As this is a bit confusing and may cause security issues, it is recommended to run the cluster in a separate network over a network switch, where just one computer for configuration is connected to. This computer also needs a connection to the public internet to allow MongoDB being pulled from the packet sources. Therefore, this computer is also used as a router between the cluster-network and the public one. For example, a notebook can be used, which is connected to the Internet over Wifi and via LAN to the cluster switch. `start_router.sh` is a script to start NAT forwarding on that computer to route outgoing traffic from the cluster to the public internet. ipv4 forwarding has to be activated seperately (add `net.ipv4.ip_forward = 1` to `/etc/sysctl.conf` and reboot, check with `cat /proc/sys/net/ipv4/ip_forward`, refer [here](http://www.ducea.com/2006/08/01/how-to-enable-ip-forwarding-in-linux/))
 
-In this case, wlan0 has access to an external network and eth0 is connected to the cluster.
+In the case of this script, wlan0 has access to an external network and eth0 is connected to the cluster, modify as appropriate if needed. 
 
 # Ansible
 
