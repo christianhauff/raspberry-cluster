@@ -4,11 +4,33 @@
 
 # Basics
 
-The contents of this repository help creating a cluster of multiple Raspberry Pi Computers running a MongoDB Database Software to show the fundamentals of Replication (splitting the same data on multiple machines for redunancy) and Sharding (splitting the datasets on several machines to distribute storage and computing power). Using the Cluster, also effects of network partitions (unplugging single computers from the cluster) and performance measurements can be observed.
+The contents of this repository help creating a cluster of multiple Raspberry Pi Computers running a MongoDB Database Software to show the fundamentals of Replication (splitting the same data on multiple machines for redunancy) and Sharding (splitting the datasets on several machines to distribute storage and computing power). Using the Cluster, also effects of network partitions (unplugging single computers from the cluster) and performance measurements can be observed. The PoC-Setup uses a Cisco SF250-48 Switch.
+
+## Raspberry Pi
+
+![](https://projects-static.raspberrypi.org/projects/raspberry-pi-setting-up/3addc4ca2ca0b7c999bdb03a46801a729614b235/en/images/pi-labelled.png)
+
+The Raspberry Pi is a cheap single-board computer developed by the Raspberry Pi Foundation. The (at the beginning of this project) latest model, the Pi 3 B+ is the size of a credit card and equipped with an ARMv8-Processor, multiple USB-Ports, a LAN-Port, a WiFi-Module, an HDMI and audio output as well as several programmable GPIO-Pins. The Raspberry is used in many tinker-projects and prototypes as it is cheap, has a relatively low power consumption and various communication interfaces to integrate it into different environments. The mostly used operating system is Raspbian Linux, which is derived from Debian.
 
 ## MongoDB
 
-MongoDB is a database software... tbd
+![MongoDB Logo](https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/MongoDB_Logo.svg/1920px-MongoDB_Logo.svg.png)
+
+[MongoDB](https://www.mongodb.com/) is a NoSQL database software that is mainly focused on scalability. It's source code is available under SSPL License and is free to use, as long as all modifications are made publicly available (as of july 2019).
+
+### Components
+
+#### mongod
+
+`mongod` is the service to run the actual database instance.
+
+#### mongos
+
+`mongos` is the shard router. Per database cluster, there is at least one `mongos`-instance needed that serves an endpoint to the actual application using the database. It will route the request to the shard where the required data is located.
+
+#### mongoc
+
+`mongoc` is a configuration server for a sharded setup. Usually, multiple `mongoc`-instances are used for redundancy. They all have to be known to the `mongos`-instances to allow the sharding to work correctly.
 
 # Preparing the SD Cards
 
@@ -61,9 +83,10 @@ The IP Configuration used for the project is the following (any ip range can be 
 
 |Address(-range)|Usage|
 |---|---|
-|192.168.1.1|"Master"-Raspberry (Monitoring, mongoc router)|
+|192.168.1.1|"Master"-Raspberry (Monitoring, mongos router)|
 |192.168.1.2|Computer used for configuring the cluster, running ansible|
 |192.168.1.10-29|20 Cluster Nodes|
+|192.168.1.30|Separate Raspberry running mongodb for reference measurements|
 
 # Start Router
 
