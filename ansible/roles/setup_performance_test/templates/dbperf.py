@@ -18,8 +18,7 @@ while 1:
 
         start = time.time()
 
-	#TODO must be blocking, but seems to continue
-        res = subprocess.Popen(['mongo', 'testdb', '/opt/insert_random.js'], stdout = subprocess.PIPE)
+        res = subprocess.call(['mongo', 'testdb', '/opt/insert_random.js'], stdout = subprocess.PIPE)
 
         duration = time.time() - start
 
