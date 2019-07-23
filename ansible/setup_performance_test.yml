@@ -1,0 +1,5 @@
+---
+
+- hosts: performance_test
+  roles:
+  - role: setup_performance_test

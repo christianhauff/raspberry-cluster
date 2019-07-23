@@ -1,0 +1,26 @@
+---
+
+- name: Copy Test Data
+  template: src=insert_random.js dest=/opt/insert_random.js
+  become: yes
+
+- name: Copy performance measurement server
+  template: src=dbperf.py dest=/opt/dbperf.py
+  become: yes
+
+- name: Copy performance measurement service
+  template: src=dbperf.service dest=/etc/init.d/dbperf mode=+x
+  become: yes
+
+- name: start dbperf service on boot
+  become: yes
+  lineinfile:
+    path: /etc/rc.local
+    line: service dbperf start
+    insertbefore: '^exit 0'
+    state: present
+
+- name: reboot
+  reboot:
+  become: yes
+

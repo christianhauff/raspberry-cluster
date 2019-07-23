@@ -1,0 +1,29 @@
+#!/bin/bash
+
+case "$1" in
+start)
+   python /opt/dbperf.py &
+   echo $!>/var/run/dbperf.pid
+   ;;
+stop)
+   kill `cat /var/run/dbperf.pid`
+   rm /var/run/dbperf.pid
+   ;;
+restart)
+   $0 stop
+   $0 start
+   ;;
+status)
+   if [ -e /var/run/dbperf.pid ]; then
+      echo dbperf is running, pid=`cat /var/run/dbperf.pid`
+   else
+      echo dbperf.py is NOT running
+      exit 1
+   fi
+   ;;
+*)
+   echo "Usage: $0 {start|stop|status|restart}"
+esac
+
+exit 0
+
