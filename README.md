@@ -105,7 +105,7 @@ ansible-playbook -i <inventory file> <playbook file>
 
 ## Inventory Files
 
-* hosts01-19
+* fullcluster.hosts
     * mongo_servers: all servers where the mongodb will be installed
     * mongod_servers: servers for replication without sharding
     * replication_master: initial masters for each shard
