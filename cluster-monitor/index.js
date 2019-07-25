@@ -21,15 +21,38 @@ var mode = "default";
 
 var pingstats = {};
 var insObj = [];
+var perfstats = {
+  "cluster": [],
+  "single": []
+}
+
+const net = require('net')
 
 var ws = require("nodejs-websocket")
 var server = ws.createServer(function (conn) {
     console.log("New connection");
     conn.on("text", function (str) {
-      if (['default','shstatus','sharddistribution', 'doccount', 'repsetstatus', 'ping'].indexOf(str) > -1) {
+      if (['default','shstatus','sharddistribution', 'doccount', 'repsetstatus', 'ping', 'perf'].indexOf(str) > -1) {
         mode = str;
         console.log("changed: " + mode);
         monitorLoop();
+      }
+      if (['perf_cluster', 'perf_single', 'perf_clear'].indexOf(str) > -1) {
+        if (str == 'perf_cluster') {
+          let client = new net.Socket();
+          client.connect({ port: 8080, host: '192.168.1.1' }, function() {});
+          client.on('data', function(chunk) {perfstats.cluster.push(chunk.toString());client.end();console.log("measured: "+chunk.toString());});
+        }
+        else if (str == 'perf_single') {
+          let client = new net.Socket();
+          client.connect({ port: 8080, host: '192.168.1.30' }, function() {});
+          client.on('data', function(chunk) {perfstats.single.push(chunk.toString());client.end();console.log("measured: "+chunk.toString());});
+        }
+        else if (str == 'perf_clear') {
+          perfstats.cluster = []; perfstats.single = [];
+          console.log("measurements cleared");
+        }
+
       }
     })
     conn.on("close", function (code, reason) {
@@ -56,50 +79,51 @@ function monitorLoop() {
   var out_display = "";
 
  switch (mode) {
-  
+
   case "default":
   out_log += dbstats.getShardDistribution();
   out_log += "Document Count: " + dbstats.getDocNumber();
   break;
-  
+
   case "shstatus":
   out_log += dbstats.getShStatus();
   break;
-  
+
   case "sharddistribution":
   var shardDist = dbstats.getShardDistribution();
   out_log += shardDist;
-  
+
   var shardDistRegex = new RegExp("Shard ([\w]+)")
-  
+
   var distributionStrings = shardDist.match(/Shard (\w+) contains ([\d\.%]+)/g)
-  
+
   //console.log(JSON.stringify(distributionStrings, null, 2))
-  
+
   out_display += "<div class='progress-outer'>"
-  
+
   var colors = ['#099E09', '#1E90FF', '#c63423', '#b4b737']
-  
-  for (i=0; i<distributionStrings.length; i++) {
-    let shardInfo = distributionStrings[i]
-    let shardInfoFields = shardInfo.split(" ")
-    
-    //console.log("name: " + shardInfoFields[1] + "; perc: " + shardInfoFields[3])
-    
-    out_display += "<span class='progress-inner' style='width: " + shardInfoFields[3] + "; background-color: " + colors[i] + ";'>" + shardInfoFields[1] + ": " + shardInfoFields[3] + "</span>"
-    
+
+  if (distributionStrings){
+    for (i=0; i<distributionStrings.length; i++) {
+      let shardInfo = distributionStrings[i]
+      let shardInfoFields = shardInfo.split(" ")
+
+      //console.log("name: " + shardInfoFields[1] + "; perc: " + shardInfoFields[3])
+
+      out_display += "<span class='progress-inner' style='width: " + shardInfoFields[3] + "; background-color: " + colors[i] + ";'>" + shardInfoFields[1] + ": " + shardInfoFields[3] + "</span>"
+    }
   }
 
   break;
-  
+
   case "doccount":
   out_log += dbstats.getDocNumber();
   break;
-  
+
   case "repsetstatus":
   var rsStatus = dbstats.getRsStatus();
   out_log += JSON.stringify(rsStatus, null, 2);
-  
+
   try {
     out_display = `<table>\n<tr>\n<td>RS1</td>\n`
     var members = rsStatus.rs1.members;
@@ -112,7 +136,7 @@ function monitorLoop() {
       }
     }
     out_display += "</tr>"
-    
+
     out_display += `<tr>\n<td>RS2</td>\n`
     var members = rsStatus.rs2.members;
     for (i=0; i<members.length; i++) {
@@ -124,18 +148,18 @@ function monitorLoop() {
       }
     }
     out_display += "</tr>"
-    
+
     out_display += "</table>"
   }
   catch (e) {
     console.log("repsetstatus failed")
   }
-  
+
   break;
-  
+
   case "ping":
   out_log = JSON.stringify(pingstats, null, 2);
-  
+
   out_display = "<table>"
   var nth = 0;
   for (var host in pingstats) {
@@ -156,13 +180,36 @@ function monitorLoop() {
   out_display += "</tr>";
 
   break;
-  
+
+  case "perf":
+
+  out_display = "<button onClick='wsset(\"perf_cluster\")'>Insert to Cluster</button>";
+  out_display += "<button onclick='wsset(\"perf_single\")'>Insert to Single MongoDB</button>";
+  out_display += "<button onclick='wsset(\"perf_clear\")'>Clear</button><br><br>\n\n";
+
+  let maxlength = 0;
+  if (perfstats.cluster.length > maxlength) {maxlength = perfstats.cluster.length}
+  if (perfstats.single.length > maxlength) {maxlength = perfstats.single.length}
+
+  out_display += "<table><tr><th>Cluster</th><th>Single</th><tr>";
+
+  for (i=0; i<maxlength; i++) {
+    out_display += "<tr><td>";
+    if (perfstats.cluster[i] != undefined) {out_display += String(Math.round(perfstats.cluster[i]*100)/100)}
+    out_display += "</td><td>"
+    if (perfstats.single[i] != undefined) {out_display += String(Math.round(perfstats.single[i]*100)/100)}
+    out_display += "</td></tr>"
+  }
+  out_display += "</table>"
+
+  break;
+
   } // end switch
-  
+
   var outval = {};
   outval["display"] = out_display;
   outval["log"] = out_log;
-  
+
   broadcast(server, JSON.stringify(outval));
 
 } //end monitorLoop function
@@ -186,9 +233,9 @@ else {
 }
 
 function pingLoop() {
-  
+
   var session = ping.createSession({timeout: 500});
-  
+
   for (i=0; i<targets.length; i++) {
     session.pingHost(targets[i], function(e, t) {
       if (!e) {
@@ -205,19 +252,19 @@ function dbstats() {
   this.getDocNumber = function() {
     return exec("mongo testdb --eval 'db.testCol.count()'").toString().split("\n").splice(2).join("\n");
   }
-  
+
   this.getShardDistribution = function() {
-  
+
     return exec("mongo testdb --eval 'db.testCol.getShardDistribution()'").toString().split("\n").splice(2).join("\n");
   }
-  
+
   this.getShStatus = function() {
     return exec("mongo testdb --eval 'sh.status({verbose:true})'").toString().split("\n").splice(2).join("\n");
   }
-  
+
   this.getRsStatus = function() {
     var status = {};
-    
+
     for (i=0; i<rs1members.length; i++) {
       try {
         var result = exec("mongo testdb --host " + rs1members[i] + " --eval 'JSON.stringify(rs.status(), null, 2)';");
@@ -230,7 +277,7 @@ function dbstats() {
         continue;
       }
     }
-    
+
     for (i=0; i<rs2members.length; i++) {
       try {
         var result = exec("mongo testdb --host " + rs2members[i] + " --eval 'JSON.stringify(rs.status(), null, 2)';");

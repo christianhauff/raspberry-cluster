@@ -1,6 +1,6 @@
 
   console.log("trying connect");
-  var socket = new WebSocket("ws://localhost:8001", "text")
+  var socket = new WebSocket("ws://" + window.location.hostname + ":8001", "text")
   
   socket.onopen = function () {
   console.log("onopen")
