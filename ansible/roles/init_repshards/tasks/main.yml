@@ -34,8 +34,8 @@
 - name: Show debuglog of add_shards
   debug: msg="{{ add_shards_output.stdout_lines }}"
 
-- name: Copy Test Data
-  template: src=insert_random.js dest=/tmp/insert_random.js
-
-- name: Insert Test Data
-  shell: mongo testdb /tmp/insert_random.js
+#- name: Copy Test Data
+#  template: src=insert_random.js dest=/tmp/insert_random.js
+#
+#- name: Insert Test Data
+#  shell: mongo testdb /tmp/insert_random.js
