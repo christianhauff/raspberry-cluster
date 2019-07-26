@@ -1,12 +1,9 @@
+#!/usr/bin/env node
+
 const express = require('express');
 const app = express();
 const port = 3000;
 
-app.get('/generateData', function(req, res) {
-  //generateRandomDataset();
-  //res.send(executeClusterBenchmark());
-  executeClusterBenchmark(res);
-});
 app.use(express.static('public'));
 
 try {
@@ -41,12 +38,12 @@ var server = ws.createServer(function (conn) {
         if (str == 'perf_cluster') {
           let client = new net.Socket();
           client.connect({ port: 8080, host: '192.168.1.1' }, function() {});
-          client.on('data', function(chunk) {perfstats.cluster.push(chunk.toString());client.end();console.log("measured: "+chunk.toString());});
+          client.on('data', function(chunk) {perfstats.cluster.push(chunk.toString());client.end();});
         }
         else if (str == 'perf_single') {
           let client = new net.Socket();
           client.connect({ port: 8080, host: '192.168.1.30' }, function() {});
-          client.on('data', function(chunk) {perfstats.single.push(chunk.toString());client.end();console.log("measured: "+chunk.toString());});
+          client.on('data', function(chunk) {perfstats.single.push(chunk.toString());client.end();});
         }
         else if (str == 'perf_clear') {
           perfstats.cluster = []; perfstats.single = [];
@@ -125,6 +122,9 @@ function monitorLoop() {
   out_log += JSON.stringify(rsStatus, null, 2);
 
   try {
+
+    //RS1
+
     out_display = `<table>\n<tr>\n<td>RS1</td>\n`
     var members = rsStatus.rs1.members;
     for (i=0; i<members.length; i++) {
@@ -137,8 +137,38 @@ function monitorLoop() {
     }
     out_display += "</tr>"
 
+    //RS2
+
     out_display += `<tr>\n<td>RS2</td>\n`
     var members = rsStatus.rs2.members;
+    for (i=0; i<members.length; i++) {
+      if (members[i].health == 1) {
+        out_display +=  "<td class='host_alive'>" + members[i].name.slice(0,-6) + "<br>" + members[i].stateStr + "</td>\n"
+      }
+      else {
+        out_display +=  "<td class='host_dead'>" + members[i].name.slice(0,-6) + "<br>" + members[i].stateStr + "</td>\n"
+      }
+    }
+    out_display += "</tr>"
+
+    //RS3
+
+    out_display += `<tr>\n<td>RS3</td>\n`
+    var members = rsStatus.rs3.members;
+    for (i=0; i<members.length; i++) {
+      if (members[i].health == 1) {
+        out_display +=  "<td class='host_alive'>" + members[i].name.slice(0,-6) + "<br>" + members[i].stateStr + "</td>\n"
+      }
+      else {
+        out_display +=  "<td class='host_dead'>" + members[i].name.slice(0,-6) + "<br>" + members[i].stateStr + "</td>\n"
+      }
+    }
+    out_display += "</tr>"
+
+    //RS4
+
+    out_display += `<tr>\n<td>RS4</td>\n`
+    var members = rsStatus.rs4.members;
     for (i=0; i<members.length; i++) {
       if (members[i].health == 1) {
         out_display +=  "<td class='host_alive'>" + members[i].name.slice(0,-6) + "<br>" + members[i].stateStr + "</td>\n"
@@ -200,6 +230,11 @@ function monitorLoop() {
     if (perfstats.single[i] != undefined) {out_display += String(Math.round(perfstats.single[i]*100)/100)}
     out_display += "</td></tr>"
   }
+
+  //average
+  out_display += "<tr><td>Ø" + String(Math.round(array_average(perfstats.cluster)*100)/100) + "</td>";
+  out_display += "<td>Ø" + String(Math.round(array_average(perfstats.single)*100)/100) + "</td></tr>";
+
   out_display += "</table>"
 
   break;
@@ -213,6 +248,21 @@ function monitorLoop() {
   broadcast(server, JSON.stringify(outval));
 
 } //end monitorLoop function
+
+function array_average(array) {
+  let sum = 0;
+
+  if (array.length == 0) {
+    return "N/A"
+  }
+
+  for (i=0; i<array.length; i++) {
+    sum += parseFloat(array[i]);
+  }
+
+  return sum/array.length
+
+}
 
 var targets = ['192.168.1.1', '192.168.1.10', '192.168.1.11', '192.168.1.12', '192.168.1.13', '192.168.1.14', 
   '192.168.1.15', '192.168.1.16', '192.168.1.17', '192.168.1.18', '192.168.1.19',
@@ -273,7 +323,7 @@ function dbstats() {
         break;
       }
       catch(e) {
-        console.log("rs1: call to member " + trynumber + " failed");
+        console.log("rs1: call to member " + rs1members[i] + " failed");
         continue;
       }
     }
@@ -286,48 +336,40 @@ function dbstats() {
         break;
       }
       catch(e) {
-        console.log("rs2: call to member " + trynumber + " failed");
+        console.log("rs2: call to member " + rs2members[i] + " failed");
         continue;
       }
     }
+
+    for (i=0; i<rs3members.length; i++) {
+      try {
+        var result = exec("mongo testdb --host " + rs3members[i] + " --eval 'JSON.stringify(rs.status(), null, 2)';");
+        status["rs3"] = JSON.parse(result.toString().split("\n").splice(2).join("\n"));
+        i>0 ? console.log("rs3: call to member " + i + " succeeded") : null;
+        break;
+      }
+      catch(e) {
+        console.log("rs3: call to member " + rs3members[i] + " failed");
+        continue;
+      }
+    }
+
+    for (i=0; i<rs4members.length; i++) {
+      try {
+        var result = exec("mongo testdb --host " + rs4members[i] + " --eval 'JSON.stringify(rs.status(), null, 2)';");
+        status["rs4"] = JSON.parse(result.toString().split("\n").splice(2).join("\n"));
+        i>0 ? console.log("rs4: call to member " + i + " succeeded") : null;
+        break;
+      }
+      catch(e) {
+        console.log("rs4: call to member " + rs4members[i] + " failed");
+        continue;
+      }
+    }
+
+
 
     return status
   }
 }
 
-function rand() {return Math.round(Math.random()*1000000)};
-
-function generateRandomDataset(number = 1000) {
-  // var filecontent = "db = db.getSiblingDB('testdb');\n"
-  // for (i=0; i<number; i++) {
-  //   filecontent += "db.testCol.insert({key:"+rand()+",val1:"+rand()+",val2:"+rand()+"});\n"
-  // }
-  // const fs = require('fs');
-  // fs.writeFile("/tmp/insert_random_benchmark.js", filecontent, function(){});
-
-  for (i=0; i<number; i++) {
-    insObj.push({key: rand(), var1: rand(), var2: rand()})
-  }
-
-}
-
-function executeClusterBenchmark(res) {
-  var response = res;
-  //console.log(exec("mongo /tmp/insert_random_benchmark.js").toString());
-  var mongo = require('mongodb').MongoClient;
-  mongo.connect("mongodb://127.0.0.1:27017/", function (e, db) {
-    if (e) {console.log(e);return false;}
-    console.log("connection successful");
-    var dbo = db.db("testdb");
-    if (insObj.length == 0) {generateRandomDataset()}
-    console.log("insert start");
-    var start = new Date()
-    dbo.collection("testCol").insertMany(insObj, function(e, res) {
-      console.log("insert end");
-      var duration = new Date() - start
-      if (e) {console.log("error");return;}
-      //console.log(JSON.stringify(res, null, 2));
-      response.send({status: 200, duration: duration});
-    })
-  });
-}
