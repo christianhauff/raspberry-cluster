@@ -6,3 +6,9 @@
     update_cache: yes
     state: present
   become: yes
+
+# copy folder from repo to /home/pi/
+
+# deploy service file (see https://stackoverflow.com/a/29042953/9013493)
+
+# enable service on boot
