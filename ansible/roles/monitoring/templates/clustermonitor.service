@@ -4,7 +4,7 @@ Description=Cluster Monitor
 [Service]
 ExecStart=/home/pi/cluster-monitor/index.js
 Restart=always
-User=nobody
+User=root #required for the ping function
 # Note Debian/Ubuntu uses 'nogroup', RHEL/Fedora uses 'nobody'
 Group=nogroup
 Environment=PATH=/usr/bin:/usr/local/bin
