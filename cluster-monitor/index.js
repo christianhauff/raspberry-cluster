@@ -18,10 +18,19 @@ var mode = "default";
 
 var pingstats = {};
 var insObj = [];
+
+//times for performance measurement
 var perfstats = {
   "cluster": [],
   "single": []
 }
+
+// performance measurement pending
+var pending = {
+  "cluster": false,
+  "single": false,
+}
+
 
 const net = require('net')
 
@@ -38,12 +47,14 @@ var server = ws.createServer(function (conn) {
         if (str == 'perf_cluster') {
           let client = new net.Socket();
           client.connect({ port: 8080, host: '192.168.1.1' }, function() {});
-          client.on('data', function(chunk) {perfstats.cluster.push(chunk.toString());client.end();});
+          client.on('data', function(chunk) {perfstats.cluster.push(chunk.toString());client.end();pending.cluster = false});
+          pending.cluster = true;
         }
         else if (str == 'perf_single') {
           let client = new net.Socket();
           client.connect({ port: 8080, host: '192.168.1.30' }, function() {});
-          client.on('data', function(chunk) {perfstats.single.push(chunk.toString());client.end();});
+          client.on('data', function(chunk) {perfstats.single.push(chunk.toString());client.end();pending.single = false;});
+          pending.single = true;
         }
         else if (str == 'perf_clear') {
           perfstats.cluster = []; perfstats.single = [];
@@ -77,15 +88,13 @@ function monitorLoop() {
 
  switch (mode) {
 
-  case "default":
-  out_log += dbstats.getShardDistribution();
-  out_log += "Document Count: " + dbstats.getDocNumber();
-  break;
-
   case "shstatus":
+  out_display += "Command: <pre>sh.status({verbose:true})</pre><br>";
+
   out_log += dbstats.getShStatus();
   break;
 
+  case "default":
   case "sharddistribution":
   var shardDist = dbstats.getShardDistribution();
   out_log += shardDist;
@@ -96,7 +105,8 @@ function monitorLoop() {
 
   //console.log(JSON.stringify(distributionStrings, null, 2))
 
-  out_display += "<div class='progress-outer'>"
+  out_display += "Command: <pre>db.testCollection.getShardDistribution()</pre><br><br>";
+  out_display += "<div class='progress-outer'>";
 
   var colors = ['#099E09', '#1E90FF', '#c63423', '#b4b737']
 
@@ -114,10 +124,15 @@ function monitorLoop() {
   break;
 
   case "doccount":
+  out_display += "Command: <pre>db.testCollection.count()</pre><br>";
+
   out_log += dbstats.getDocNumber();
   break;
 
   case "repsetstatus":
+
+  out_display += "Command: <pre>rs.status()</pre> (executed on every node) <br><br>";
+
   var rsStatus = dbstats.getRsStatus();
   out_log += JSON.stringify(rsStatus, null, 2);
 
@@ -125,7 +140,7 @@ function monitorLoop() {
 
     //RS1
 
-    out_display = `<table>\n<tr>\n<td>RS1</td>\n`
+    out_display += `<table>\n<tr>\n<td>RS1</td>\n`
     var members = rsStatus.rs1.members;
     for (i=0; i<members.length; i++) {
       if (members[i].health == 1) {
@@ -213,8 +228,8 @@ function monitorLoop() {
 
   case "perf":
 
-  out_display = "<button onClick='wsset(\"perf_cluster\")'>Insert to Cluster</button>";
-  out_display += "<button onclick='wsset(\"perf_single\")'>Insert to Single MongoDB</button>";
+  out_display = "<button onClick='wsset(\"perf_cluster\")'>" + ((pending.cluster) ? "Pending measurement" : "Insert to Cluster") + "</button>";
+  out_display += "<button onclick='wsset(\"perf_single\")'>" + ((pending.single) ? "Pending measurement" : "Insert to Single MongoDB")+"</button>";
   out_display += "<button onclick='wsset(\"perf_clear\")'>Clear</button><br><br>\n\n";
 
   let maxlength = 0;
