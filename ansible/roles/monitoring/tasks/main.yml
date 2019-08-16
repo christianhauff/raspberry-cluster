@@ -7,8 +7,38 @@
     state: present
   become: yes
 
-# copy folder from repo to /home/pi/
+- name: copy nodejs-folder from repo to /home/pi/
+  copy:
+    src: "{{ playbook_dir }}/../cluster-monitor"
+    dest: /home/pi
 
-# deploy service file (see https://stackoverflow.com/a/29042953/9013493)
+- name: execute npm install
+#  npm:
+#    path: /home/pi/cluster-monitor/
+  shell: npm install
+  args:
+    chdir: /home/pi/cluster-monitor
+     
 
-# enable service on boot
+#(see https://stackoverflow.com/a/29042953/9013493)
+- name: deploy service file
+  template:
+    src: clustermonitor.service
+    dest: /etc/systemd/system/clustermonitor.service
+    mode: 0755
+  become: yes
+
+
+- name: reload services
+  shell: systemctl daemon-reload
+  become: yes
+
+- name: enable service on boot
+  systemd:
+    name: clustermonitor
+    enabled: yes
+
+- name: start service
+  systemd:
+    name: clustermonitor
+    state: started
