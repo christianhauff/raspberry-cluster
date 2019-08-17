@@ -1,5 +1,6 @@
 ---
 
 - hosts: monitoring
-  roles:
-  - role: monitoring
+  roles: 
+    - monitoring
+    - setup_performance_test
