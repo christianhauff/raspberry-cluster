@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.16.4",
-    "mongodb": "^2.2.19",
+    "mongodb": "^3.6.1",
     "net-ping": "^1.2.3",
     "nodejs-websocket": "^1.7.2"
   }
